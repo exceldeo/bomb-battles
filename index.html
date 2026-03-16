@@ -1,0 +1,1331 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>💣 Bomb Battle!</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #fdf6e3;
+        --bg2: #faebd0;
+        --ink: #3a2a1a;
+        --p1: #e8473f;
+        --p1light: #ffd6d4;
+        --p1dark: #b52e27;
+        --p2: #2f7fc1;
+        --p2light: #cce4f7;
+        --p2dark: #1a5a8f;
+        --yellow: #f7c948;
+        --yellowdk: #d4a017;
+        --green: #4caf50;
+        --greenlt: #c8f0c8;
+        --grass: #6abf5e;
+        --sand: #f0d9a0;
+        --shadow: rgba(58, 42, 26, 0.18);
+        --ink2: rgba(58, 42, 26, 0.55);
+        --radius: 18px;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background: var(--bg);
+        font-family: "Nunito", sans-serif;
+        min-height: 100vh;
+        overflow-x: hidden;
+        position: relative;
+      }
+
+      /* Dotted background pattern */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image: radial-gradient(
+          circle,
+          rgba(58, 42, 26, 0.08) 1.5px,
+          transparent 1.5px
+        );
+        background-size: 28px 28px;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      #app {
+        position: relative;
+        z-index: 1;
+        padding: 20px 16px 32px;
+        max-width: 680px;
+        margin: 0 auto;
+      }
+
+      /* ── SCREENS ── */
+      .screen {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+        animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+      .screen.active {
+        display: flex;
+      }
+
+      @keyframes popIn {
+        from {
+          opacity: 0;
+          transform: scale(0.88) translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+      }
+      @keyframes wiggle {
+        0%,
+        100% {
+          transform: rotate(-2deg);
+        }
+        50% {
+          transform: rotate(2deg);
+        }
+      }
+      @keyframes bounce {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-6px);
+        }
+      }
+      @keyframes shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        20% {
+          transform: translateX(-8px);
+        }
+        40% {
+          transform: translateX(8px);
+        }
+        60% {
+          transform: translateX(-5px);
+        }
+        80% {
+          transform: translateX(5px);
+        }
+      }
+      @keyframes flipIn {
+        0% {
+          transform: scaleY(0.05) scale(1.08);
+        }
+        60% {
+          transform: scaleY(1.1);
+        }
+        100% {
+          transform: scaleY(1);
+        }
+      }
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.14);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0) rotate(-1deg);
+        }
+        50% {
+          transform: translateY(-5px) rotate(1deg);
+        }
+      }
+      @keyframes closingPop {
+        0% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        40% {
+          transform: scale(1.12);
+          opacity: 0.6;
+        }
+        100% {
+          transform: scale(0.85);
+          opacity: 0;
+        }
+      }
+      @keyframes starSpin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes confettiFall {
+        0% {
+          transform: translateY(-10px) rotate(0deg);
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(380px) rotate(720deg);
+          opacity: 0;
+        }
+      }
+      @keyframes tada {
+        0%,
+        100% {
+          transform: scale(1) rotate(0);
+        }
+        10% {
+          transform: scale(0.9) rotate(-3deg);
+        }
+        20% {
+          transform: scale(1.1) rotate(3deg);
+        }
+        30% {
+          transform: scale(1.1) rotate(-3deg);
+        }
+        40%,
+        60%,
+        80% {
+          transform: scale(1.1) rotate(3deg);
+        }
+        50%,
+        70%,
+        90% {
+          transform: scale(1.1) rotate(-3deg);
+        }
+      }
+
+      /* ── HAND-DRAWN CARD ── */
+      .card {
+        background: white;
+        border: 3px solid var(--ink);
+        border-radius: var(--radius);
+        box-shadow: 5px 5px 0 var(--ink);
+        padding: 22px 24px;
+        width: 100%;
+        max-width: 400px;
+        position: relative;
+      }
+      .card::before {
+        content: "";
+        position: absolute;
+        inset: 3px;
+        border-radius: calc(var(--radius) - 4px);
+        border: 1.5px dashed rgba(58, 42, 26, 0.12);
+        pointer-events: none;
+      }
+
+      /* ── TITLE ── */
+      .game-title {
+        font-family: "Fredoka One", cursive;
+        font-size: 52px;
+        color: var(--ink);
+        text-align: center;
+        letter-spacing: 1px;
+        line-height: 1;
+        position: relative;
+        display: inline-block;
+        animation: float 3s ease-in-out infinite;
+      }
+      .game-title span.bomb-emoji {
+        display: inline-block;
+        animation: wiggle 1.2s ease-in-out infinite;
+      }
+      .title-shadow {
+        font-family: "Fredoka One", cursive;
+        font-size: 52px;
+        color: var(--yellow);
+        position: absolute;
+        top: 4px;
+        left: 4px;
+        z-index: -1;
+        letter-spacing: 1px;
+        line-height: 1;
+        -webkit-text-stroke: 3px var(--ink);
+      }
+      .title-wrap {
+        position: relative;
+        text-align: center;
+        margin-bottom: 4px;
+      }
+      .tagline {
+        font-family: "Fredoka One", cursive;
+        font-size: 14px;
+        color: var(--ink2);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        text-align: center;
+      }
+
+      /* ── CONFIG LABEL ── */
+      .config-label {
+        font-family: "Fredoka One", cursive;
+        font-size: 16px;
+        color: var(--ink);
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      /* ── ARROW SLIDER ── */
+      .arrow-slider {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .arr-btn {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        border: 3px solid var(--ink);
+        background: var(--yellow);
+        box-shadow: 3px 3px 0 var(--ink);
+        color: var(--ink);
+        font-size: 20px;
+        font-weight: 900;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition:
+          transform 0.1s,
+          box-shadow 0.1s;
+        line-height: 1;
+        font-family: "Fredoka One", cursive;
+        flex-shrink: 0;
+      }
+      .arr-btn:hover {
+        background: var(--yellowdk);
+      }
+      .arr-btn:active {
+        transform: translate(2px, 2px);
+        box-shadow: 1px 1px 0 var(--ink);
+      }
+
+      .slider-val {
+        flex: 1;
+        text-align: center;
+      }
+      .slider-big {
+        font-family: "Fredoka One", cursive;
+        font-size: 36px;
+        color: var(--ink);
+        line-height: 1;
+      }
+      .slider-big.bump {
+        animation: pulse 0.22s ease;
+      }
+      .slider-sub {
+        font-size: 11px;
+        color: var(--ink2);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-top: 2px;
+        font-weight: 700;
+      }
+      .slider-dots {
+        display: flex;
+        gap: 6px;
+        justify-content: center;
+        margin-top: 8px;
+      }
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        border: 2px solid var(--ink);
+        background: transparent;
+        transition: all 0.2s;
+      }
+      .dot.on {
+        background: var(--p1);
+        transform: scale(1.2);
+      }
+      .dot.on.blue {
+        background: var(--p2);
+      }
+
+      /* ── START BUTTON ── */
+      .btn-start {
+        font-family: "Fredoka One", cursive;
+        font-size: 22px;
+        letter-spacing: 1px;
+        padding: 14px 40px;
+        border-radius: 16px;
+        border: 3px solid var(--ink);
+        background: var(--green);
+        color: white;
+        box-shadow: 5px 5px 0 var(--ink);
+        cursor: pointer;
+        transition:
+          transform 0.1s,
+          box-shadow 0.1s,
+          background 0.15s;
+        -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.15);
+      }
+      .btn-start:hover {
+        background: var(--grass);
+      }
+      .btn-start:active {
+        transform: translate(3px, 3px);
+        box-shadow: 2px 2px 0 var(--ink);
+      }
+
+      /* ── HUD ── */
+      .hud {
+        display: flex;
+        gap: 10px;
+        width: 100%;
+        align-items: stretch;
+        flex-wrap: wrap;
+      }
+      .player-hud {
+        flex: 1;
+        min-width: 110px;
+        border: 3px solid var(--ink);
+        border-radius: 16px;
+        padding: 10px 14px;
+        background: white;
+        box-shadow: 4px 4px 0 var(--ink);
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s,
+          background 0.2s;
+        position: relative;
+        overflow: hidden;
+      }
+      .player-hud::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 13px;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .player-hud.p1::after {
+        background: linear-gradient(
+          135deg,
+          rgba(232, 71, 63, 0.08),
+          transparent
+        );
+      }
+      .player-hud.p2::after {
+        background: linear-gradient(
+          135deg,
+          rgba(47, 127, 193, 0.08),
+          transparent
+        );
+      }
+      .player-hud.active {
+        transform: translateY(-3px);
+      }
+      .player-hud.active::after {
+        opacity: 1;
+      }
+      .player-hud.active.p1 {
+        box-shadow:
+          4px 4px 0 var(--p1dark),
+          0 0 0 2px var(--p1);
+        background: var(--p1light);
+      }
+      .player-hud.active.p2 {
+        box-shadow:
+          4px 4px 0 var(--p2dark),
+          0 0 0 2px var(--p2);
+        background: var(--p2light);
+      }
+
+      .p-avatar {
+        font-size: 22px;
+        margin-bottom: 2px;
+        display: block;
+      }
+      .p-name {
+        font-family: "Fredoka One", cursive;
+        font-size: 13px;
+        color: var(--ink2);
+        letter-spacing: 1px;
+      }
+      .p-score {
+        font-family: "Fredoka One", cursive;
+        font-size: 30px;
+        color: var(--ink);
+        line-height: 1;
+      }
+      .p-status {
+        font-size: 11px;
+        color: var(--ink2);
+        font-weight: 700;
+        margin-top: 2px;
+      }
+
+      .turn-badge {
+        flex: 0 0 auto;
+        border: 3px solid var(--ink);
+        border-radius: 16px;
+        padding: 8px 12px;
+        background: var(--sand);
+        box-shadow: 3px 3px 0 var(--ink);
+        text-align: center;
+        min-width: 100px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+      }
+      .turn-label {
+        font-size: 10px;
+        font-weight: 800;
+        color: var(--ink2);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+      .turn-name {
+        font-family: "Fredoka One", cursive;
+        font-size: 18px;
+        color: var(--ink);
+      }
+      .turn-chosen {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--ink2);
+      }
+
+      /* ── GRID ── */
+      .grid-wrap {
+        background: var(--bg2);
+        border: 3px solid var(--ink);
+        border-radius: 20px;
+        box-shadow: 6px 6px 0 var(--ink);
+        padding: 14px;
+        position: relative;
+      }
+      /* little corner doodles */
+      .grid-wrap::before,
+      .grid-wrap::after {
+        content: "✦";
+        position: absolute;
+        font-size: 14px;
+        color: var(--ink2);
+        opacity: 0.3;
+      }
+      .grid-wrap::before {
+        top: 6px;
+        left: 10px;
+      }
+      .grid-wrap::after {
+        bottom: 6px;
+        right: 10px;
+      }
+
+      .grid {
+        display: grid;
+        gap: 7px;
+      }
+
+      /* ── CELL ── */
+      .cell {
+        border-radius: 12px;
+        border: 3px solid var(--ink);
+        background: white;
+        box-shadow: 3px 3px 0 var(--ink);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 0px;
+        user-select: none;
+        transition:
+          transform 0.12s,
+          box-shadow 0.12s,
+          background 0.2s,
+          border-color 0.2s;
+        position: relative;
+        overflow: hidden;
+      }
+      .cell:hover:not(.no-click) {
+        transform: translate(-2px, -3px);
+        box-shadow: 5px 5px 0 var(--ink);
+        background: #fffbf0;
+      }
+      .cell:active:not(.no-click) {
+        transform: translate(1px, 1px);
+        box-shadow: 1px 1px 0 var(--ink);
+      }
+      .cell.no-click {
+        cursor: default;
+      }
+
+      /* pending = selected this turn */
+      .cell.pending {
+        background: var(--yellow);
+        border-color: var(--yellowdk);
+        box-shadow: 3px 3px 0 var(--yellowdk);
+      }
+
+      /* open states */
+      .cell.open-p1 {
+        background: var(--p1light);
+        border-color: var(--p1);
+        box-shadow: 3px 3px 0 var(--p1dark);
+        cursor: default;
+      }
+      .cell.open-p2 {
+        background: var(--p2light);
+        border-color: var(--p2);
+        box-shadow: 3px 3px 0 var(--p2dark);
+        cursor: default;
+      }
+      .cell.dim-p1 {
+        background: #fff0ef;
+        border-color: rgba(232, 71, 63, 0.4);
+        box-shadow: 2px 2px 0 rgba(181, 46, 39, 0.3);
+        cursor: default;
+      }
+      .cell.dim-p2 {
+        background: #f0f6ff;
+        border-color: rgba(47, 127, 193, 0.4);
+        box-shadow: 2px 2px 0 rgba(26, 90, 143, 0.3);
+        cursor: default;
+      }
+
+      /* bomb */
+      .cell.bomb-hit {
+        background: #ffe0e0;
+        border-color: #e8473f;
+        animation:
+          shake 0.45s ease,
+          bombGlow 0.6s ease 0.1s;
+      }
+      @keyframes bombGlow {
+        0% {
+          box-shadow: 3px 3px 0 #b52e27;
+        }
+        50% {
+          box-shadow:
+            0 0 22px rgba(255, 80, 50, 0.7),
+            3px 3px 0 #b52e27;
+        }
+        100% {
+          box-shadow: 3px 3px 0 #b52e27;
+        }
+      }
+
+      /* flip animation */
+      .cell.flip {
+        animation: flipIn 0.28s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+      }
+
+      /* closing */
+      .cell.closing {
+        animation: closingPop 0.45s ease forwards;
+        pointer-events: none;
+      }
+
+      /* pulse */
+      .cell.pulse-anim {
+        animation: pulse 0.3s ease;
+      }
+
+      /* cell content */
+      .cell-num {
+        font-family: "Fredoka One", cursive;
+        line-height: 1;
+        color: var(--ink2);
+      }
+      .cell-icon {
+        font-size: 20px;
+        line-height: 1;
+      }
+      .cell-pip {
+        position: absolute;
+        top: 3px;
+        right: 5px;
+        font-family: "Fredoka One", cursive;
+        font-size: 9px;
+        line-height: 1;
+        opacity: 0.7;
+      }
+
+      /* ── ACTIONS ── */
+      .actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .btn-endturn {
+        font-family: "Fredoka One", cursive;
+        font-size: 18px;
+        letter-spacing: 1px;
+        padding: 12px 28px;
+        border-radius: 14px;
+        border: 3px solid var(--ink);
+        cursor: pointer;
+        box-shadow: 4px 4px 0 var(--ink);
+        transition:
+          transform 0.1s,
+          box-shadow 0.1s;
+      }
+      .btn-endturn:active {
+        transform: translate(2px, 2px);
+        box-shadow: 2px 2px 0 var(--ink);
+      }
+      .btn-endturn.t1 {
+        background: var(--p1);
+        color: white;
+      }
+      .btn-endturn.t1:hover {
+        background: var(--p1dark);
+      }
+      .btn-endturn.t2 {
+        background: var(--p2);
+        color: white;
+      }
+      .btn-endturn.t2:hover {
+        background: var(--p2dark);
+      }
+
+      .hint {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--ink2);
+        text-align: center;
+        background: var(--sand);
+        border: 2px solid var(--ink);
+        border-radius: 10px;
+        padding: 5px 12px;
+        box-shadow: 2px 2px 0 var(--ink);
+      }
+
+      /* ── LOG ── */
+      .log {
+        width: 100%;
+        background: white;
+        border: 3px solid var(--ink);
+        border-radius: 14px;
+        padding: 8px 12px;
+        max-height: 58px;
+        overflow-y: auto;
+        box-shadow: 3px 3px 0 var(--ink);
+      }
+      .log::-webkit-scrollbar {
+        width: 5px;
+      }
+      .log::-webkit-scrollbar-thumb {
+        background: var(--ink2);
+        border-radius: 3px;
+      }
+      .log-entry {
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.65;
+      }
+      .log-entry.p1 {
+        color: var(--p1dark);
+      }
+      .log-entry.p2 {
+        color: var(--p2dark);
+      }
+      .log-entry.sys {
+        color: var(--yellowdk);
+      }
+
+      /* ── OVERLAY ── */
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(58, 42, 26, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        animation: popIn 0.25s ease;
+        backdrop-filter: blur(3px);
+      }
+      .overlay-card {
+        background: white;
+        border: 4px solid var(--ink);
+        border-radius: 24px;
+        box-shadow: 8px 8px 0 var(--ink);
+        padding: 36px 48px;
+        text-align: center;
+        max-width: 340px;
+        width: 90%;
+        animation: tada 0.7s ease;
+        position: relative;
+        overflow: hidden;
+      }
+      .overlay-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient(
+          45deg,
+          transparent,
+          transparent 8px,
+          rgba(247, 201, 72, 0.08) 8px,
+          rgba(247, 201, 72, 0.08) 16px
+        );
+        pointer-events: none;
+      }
+      .result-emoji {
+        font-size: 64px;
+        margin-bottom: 8px;
+        display: block;
+        animation: bounce 1s ease infinite;
+      }
+      .result-title {
+        font-family: "Fredoka One", cursive;
+        font-size: 28px;
+        color: var(--ink);
+        margin-bottom: 6px;
+      }
+      .result-sub {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--ink2);
+        margin-bottom: 22px;
+      }
+      .particle {
+        position: absolute;
+        pointer-events: none;
+        animation: confettiFall linear forwards;
+        border-radius: 2px;
+      }
+
+      /* ── DECORATIVE STARS ── */
+      .deco-star {
+        position: fixed;
+        pointer-events: none;
+        font-size: 18px;
+        opacity: 0.15;
+        animation: starSpin 8s linear infinite;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Decorative background stars -->
+    <div
+      class="deco-star"
+      style="top: 5%; left: 4%; font-size: 24px; animation-duration: 10s"
+    >
+      ⭐
+    </div>
+    <div
+      class="deco-star"
+      style="
+        top: 12%;
+        right: 6%;
+        animation-duration: 13s;
+        animation-direction: reverse;
+      "
+    >
+      ✦
+    </div>
+    <div
+      class="deco-star"
+      style="bottom: 15%; left: 3%; font-size: 14px; animation-duration: 7s"
+    >
+      ★
+    </div>
+    <div
+      class="deco-star"
+      style="
+        bottom: 8%;
+        right: 5%;
+        font-size: 20px;
+        animation-duration: 11s;
+        animation-direction: reverse;
+      "
+    >
+      ✦
+    </div>
+    <div
+      class="deco-star"
+      style="top: 40%; left: 1%; font-size: 12px; animation-duration: 9s"
+    >
+      ⭐
+    </div>
+    <div
+      class="deco-star"
+      style="
+        top: 55%;
+        right: 2%;
+        font-size: 16px;
+        animation-duration: 12s;
+        animation-direction: reverse;
+      "
+    >
+      ★
+    </div>
+
+    <div id="app">
+      <!-- ══════════════ SETUP SCREEN ══════════════ -->
+      <div id="setup-screen" class="screen active">
+        <div class="title-wrap">
+          <div style="position: relative; display: inline-block">
+            <div class="title-shadow" aria-hidden="true">💣 Bomb Battle!</div>
+            <div class="game-title">
+              <span class="bomb-emoji">💣</span> Bomb Battle!
+            </div>
+          </div>
+          <div class="tagline">2 players · 1 bomb · no mercy</div>
+        </div>
+
+        <div class="card">
+          <div class="config-label">🔲 Grid Size</div>
+          <div class="arrow-slider">
+            <button class="arr-btn" onclick="changeGrid(-1)">&#9664;</button>
+            <div class="slider-val">
+              <div class="slider-big" id="grid-val">5×5</div>
+              <div class="slider-sub">grid size</div>
+              <div class="slider-dots" id="grid-dots"></div>
+            </div>
+            <button class="arr-btn" onclick="changeGrid(1)">&#9654;</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="config-label">💣 Number of Bombs</div>
+          <div class="arrow-slider">
+            <button class="arr-btn" onclick="changeBombs(-1)">&#9664;</button>
+            <div class="slider-val">
+              <div class="slider-big" id="bomb-val">1</div>
+              <div class="slider-sub">bombs</div>
+              <div class="slider-dots" id="bomb-dots"></div>
+            </div>
+            <button class="arr-btn" onclick="changeBombs(1)">&#9654;</button>
+          </div>
+        </div>
+
+        <button class="btn-start" onclick="startGame()">🚀 Let's Play!</button>
+      </div>
+
+      <!-- ══════════════ GAME SCREEN ══════════════ -->
+      <div id="game-screen" class="screen">
+        <div class="hud">
+          <div class="player-hud p1" id="hud-p1">
+            <span class="p-avatar">🔴</span>
+            <div class="p-name">PLAYER 1</div>
+            <div class="p-score" id="sc1">0</div>
+            <div class="p-status" id="st1">Waiting…</div>
+          </div>
+
+          <div class="turn-badge">
+            <div class="turn-label">Turn</div>
+            <div class="turn-name" id="turn-name">P1</div>
+            <div class="turn-chosen" id="chosen-count">0 chosen</div>
+          </div>
+
+          <div class="player-hud p2" id="hud-p2">
+            <span class="p-avatar">🔵</span>
+            <div class="p-name">PLAYER 2</div>
+            <div class="p-score" id="sc2">0</div>
+            <div class="p-status" id="st2">Waiting…</div>
+          </div>
+        </div>
+
+        <div class="grid-wrap">
+          <div class="grid" id="grid"></div>
+        </div>
+
+        <div class="actions">
+          <div class="hint">
+            🌟 pip 2 = 2 turns left &nbsp;·&nbsp; pip 1 = closing soon
+          </div>
+          <button class="btn-endturn t1" id="eot-btn" onclick="endTurn()">
+            ✅ End Turn!
+          </button>
+        </div>
+
+        <div class="log" id="log"></div>
+      </div>
+    </div>
+
+    <script>
+      /*
+  TURN RULE:
+  Player opens box on own-turn T.
+  Box closes at the END of own-turn T+2 (i.e. clickable again on own-turn T+3 / next real turn T+3).
+  Stored: openedAt = playerOwnTurn[p] BEFORE incrementing.
+  Close when playerOwnTurn[p] (after increment) === openedAt + 2.
+*/
+
+      const gridOptions = [4, 5, 6];
+      let gridIdx = 1,
+        bombCount = 1,
+        gridSize = 5;
+      let bombs = new Set();
+      let currentPlayer = 1,
+        scores = { 1: 0, 2: 0 };
+      let pending = [];
+      let openedCells = new Map(); // idx -> { player, openedAt }
+      let playerOwnTurn = { 1: 0, 2: 0 };
+      let gameActive = false;
+
+      /* ── Setup UI ── */
+      function renderDots(id, count, active, blue) {
+        const el = document.getElementById(id);
+        el.innerHTML = "";
+        for (let i = 0; i < count; i++) {
+          const d = document.createElement("div");
+          d.className =
+            "dot" + (i === active ? " on" + (blue ? " blue" : "") : "");
+          el.appendChild(d);
+        }
+      }
+      function updateSetupUI() {
+        const s = gridOptions[gridIdx];
+        const gv = document.getElementById("grid-val");
+        gv.textContent = s + "×" + s;
+        gv.classList.remove("bump");
+        void gv.offsetWidth;
+        gv.classList.add("bump");
+        setTimeout(() => gv.classList.remove("bump"), 250);
+        renderDots("grid-dots", 3, gridIdx, false);
+
+        const bv = document.getElementById("bomb-val");
+        bv.textContent = bombCount;
+        bv.classList.remove("bump");
+        void bv.offsetWidth;
+        bv.classList.add("bump");
+        setTimeout(() => bv.classList.remove("bump"), 250);
+        renderDots("bomb-dots", 3, bombCount - 1, true);
+      }
+      function changeGrid(d) {
+        gridIdx = Math.max(0, Math.min(2, gridIdx + d));
+        updateSetupUI();
+      }
+      function changeBombs(d) {
+        bombCount = Math.max(1, Math.min(3, bombCount + d));
+        updateSetupUI();
+      }
+      updateSetupUI();
+
+      /* ── Game Start ── */
+      function startGame() {
+        gridSize = gridOptions[gridIdx];
+        gameActive = true;
+        currentPlayer = 1;
+        scores = { 1: 0, 2: 0 };
+        pending = [];
+        openedCells = new Map();
+        playerOwnTurn = { 1: 0, 2: 0 };
+        bombs = new Set();
+        const total = gridSize * gridSize;
+        while (bombs.size < bombCount)
+          bombs.add(Math.floor(Math.random() * total));
+        document.getElementById("setup-screen").classList.remove("active");
+        document.getElementById("game-screen").classList.add("active");
+        buildGrid();
+        updateHUD();
+        addLog(
+          "🎮 Game started! " +
+            gridSize +
+            "×" +
+            gridSize +
+            " grid, " +
+            bombCount +
+            " bomb(s)",
+          "sys",
+        );
+      }
+
+      /* ── Grid ── */
+      function cs() {
+        return gridSize === 6 ? 52 : gridSize === 4 ? 72 : 64;
+      }
+      function buildGrid() {
+        const g = document.getElementById("grid");
+        const s = cs();
+        g.style.gridTemplateColumns = "repeat(" + gridSize + ", " + s + "px)";
+        g.innerHTML = "";
+        for (let i = 0; i < gridSize * gridSize; i++) {
+          const c = document.createElement("div");
+          c.className = "cell";
+          c.style.width = c.style.height = s + "px";
+          c.innerHTML = numLabel(i);
+          c.onclick = () => clickCell(i);
+          g.appendChild(c);
+        }
+      }
+      function getCell(i) {
+        return document.getElementById("grid").children[i];
+      }
+      function numLabel(i) {
+        const fs = cs() * 0.23;
+        return `<span class="cell-num" style="font-size:${fs}px">${i + 1}</span>`;
+      }
+      function openLabel(i, player, turnsLeft) {
+        const icon = player === 1 ? "❤️" : "💙";
+        const pipCol = player === 1 ? "var(--p1dark)" : "var(--p2dark)";
+        const fs = cs() * 0.3;
+        const numfs = cs() * 0.17;
+        return (
+          `<span class="cell-pip" style="color:${pipCol}">${turnsLeft}</span>` +
+          `<span class="cell-icon" style="font-size:${fs}px">${icon}</span>` +
+          `<span class="cell-num" style="font-size:${numfs}px;opacity:0.5">${i + 1}</span>`
+        );
+      }
+      function turnsLeft(data) {
+        return 2 - (playerOwnTurn[data.player] - data.openedAt);
+      }
+
+      /* ── Click ── */
+      function clickCell(i) {
+        if (!gameActive) return;
+        const el = getCell(i);
+        if (el.classList.contains("no-click")) return;
+        if (openedCells.has(i)) return;
+        const idx = pending.indexOf(i);
+        if (idx >= 0) {
+          pending.splice(idx, 1);
+          el.classList.remove("pending", "pulse-anim");
+          el.innerHTML = numLabel(i);
+        } else {
+          pending.push(i);
+          el.classList.add("pending");
+          el.classList.remove("pulse-anim");
+          void el.offsetWidth;
+          el.classList.add("pulse-anim");
+          const fs = cs() * 0.26;
+          el.innerHTML = `<span class="cell-icon" style="font-size:${fs}px">✅</span>`;
+          setTimeout(() => el.classList.remove("pulse-anim"), 320);
+        }
+        document.getElementById("chosen-count").textContent =
+          pending.length + " chosen";
+      }
+
+      /* ── End Turn ── */
+      function endTurn() {
+        if (!gameActive) return;
+        if (pending.length === 0) {
+          addLog("⚠️ Pick at least one box first!", "sys");
+          return;
+        }
+
+        const opp = currentPlayer === 1 ? 2 : 1;
+        let hitBomb = -1;
+        for (const i of pending) {
+          if (bombs.has(i)) {
+            hitBomb = i;
+            break;
+          }
+        }
+
+        if (hitBomb >= 0) {
+          // reveal all pending, bomb last
+          const revOrder = [...pending].sort((a, b) =>
+            a === hitBomb ? 1 : b === hitBomb ? -1 : 0,
+          );
+          revOrder.forEach((i, pos) => {
+            setTimeout(() => {
+              const el = getCell(i);
+              el.classList.remove("pending");
+              if (i === hitBomb) {
+                el.classList.add("bomb-hit", "no-click");
+                el.innerHTML = `<span class="cell-icon" style="font-size:${cs() * 0.38}px">💣</span>`;
+                setTimeout(() => {
+                  addLog(
+                    "💥 BOOM! Player " + currentPlayer + " hit a bomb!",
+                    "sys",
+                  );
+                  gameActive = false;
+                  setTimeout(() => showResult(opp), 600);
+                }, 300);
+              } else {
+                openedCells.set(i, {
+                  player: currentPlayer,
+                  openedAt: playerOwnTurn[currentPlayer],
+                });
+                el.classList.add("open-p" + currentPlayer, "flip", "no-click");
+                el.innerHTML = openLabel(i, currentPlayer, 2);
+                setTimeout(() => el.classList.remove("flip"), 320);
+              }
+            }, pos * 70);
+          });
+          pending = [];
+          return;
+        }
+
+        // Safe
+        const openedAt = playerOwnTurn[currentPlayer];
+        const opened = [...pending];
+        pending = [];
+
+        opened.forEach((i, pos) => {
+          setTimeout(() => {
+            openedCells.set(i, { player: currentPlayer, openedAt });
+            const el = getCell(i);
+            el.classList.remove("pending");
+            el.classList.add("open-p" + currentPlayer, "flip", "no-click");
+            el.innerHTML = openLabel(i, currentPlayer, 2);
+            setTimeout(() => el.classList.remove("flip"), 320);
+          }, pos * 70);
+        });
+
+        scores[currentPlayer] += opened.length;
+        addLog(
+          "Player " +
+            currentPlayer +
+            " opened " +
+            opened.length +
+            " box" +
+            (opened.length !== 1 ? "es" : "") +
+            " safely! 🎉",
+          "p" + currentPlayer,
+        );
+
+        // Increment own turn
+        playerOwnTurn[currentPlayer]++;
+
+        // Tick cells owned by currentPlayer
+        const toClose = [];
+        for (const [i, data] of openedCells) {
+          if (data.player !== currentPlayer) continue;
+          if (opened.includes(i)) continue;
+          const tl = turnsLeft(data);
+          if (tl <= 0) {
+            toClose.push(i);
+          } else {
+            const el = getCell(i);
+            el.classList.remove("open-p1", "open-p2", "dim-p1", "dim-p2");
+            el.classList.add("dim-p" + data.player);
+            el.innerHTML = openLabel(i, data.player, tl);
+          }
+        }
+
+        // Close expired cells
+        toClose.forEach((i, pos) => {
+          setTimeout(() => {
+            const el = getCell(i);
+            openedCells.delete(i);
+            el.classList.add("closing");
+            el.classList.remove(
+              "open-p1",
+              "open-p2",
+              "dim-p1",
+              "dim-p2",
+              "no-click",
+            );
+            setTimeout(() => {
+              el.classList.remove("closing");
+              el.innerHTML = numLabel(i);
+            }, 460);
+          }, pos * 45);
+        });
+
+        const switchDelay =
+          Math.max(opened.length * 70, toClose.length * 45) + 180;
+        setTimeout(() => {
+          currentPlayer = opp;
+          document.getElementById("chosen-count").textContent = "0 chosen";
+          updateHUD();
+          addLog("▶ Player " + currentPlayer + "'s turn!", "sys");
+        }, switchDelay);
+      }
+
+      /* ── HUD ── */
+      function updateHUD() {
+        document.getElementById("sc1").textContent = scores[1];
+        document.getElementById("sc2").textContent = scores[2];
+        document.getElementById("st1").textContent =
+          currentPlayer === 1 ? "🎯 Your turn!" : "Waiting…";
+        document.getElementById("st2").textContent =
+          currentPlayer === 2 ? "🎯 Your turn!" : "Waiting…";
+        const tn = document.getElementById("turn-name");
+        tn.textContent = "Player " + currentPlayer;
+        tn.style.color =
+          currentPlayer === 1 ? "var(--p1dark)" : "var(--p2dark)";
+        document.getElementById("hud-p1").className =
+          "player-hud p1" + (currentPlayer === 1 ? " active" : "");
+        document.getElementById("hud-p2").className =
+          "player-hud p2" + (currentPlayer === 2 ? " active" : "");
+        const btn = document.getElementById("eot-btn");
+        btn.className = "btn-endturn " + (currentPlayer === 1 ? "t1" : "t2");
+        btn.textContent = currentPlayer === 1 ? "✅ End Turn!" : "✅ End Turn!";
+      }
+
+      /* ── Log ── */
+      function addLog(msg, type) {
+        const l = document.getElementById("log");
+        const e = document.createElement("div");
+        e.className = "log-entry " + type;
+        e.textContent = msg;
+        l.appendChild(e);
+        l.scrollTop = l.scrollHeight;
+        if (l.children.length > 30) l.removeChild(l.firstChild);
+      }
+
+      /* ── Result ── */
+      function showResult(winner) {
+        const ov = document.createElement("div");
+        ov.className = "overlay";
+        const col = winner === 1 ? "var(--p1)" : "var(--p2)";
+        const em = winner === 1 ? "🏆" : "🏆";
+        const winEmoji = winner === 1 ? "🔴" : "🔵";
+        ov.innerHTML = `
+    <div class="overlay-card">
+      <span class="result-emoji">${winEmoji}🏆</span>
+      <div class="result-title" style="color:${col}">Player ${winner} Wins!</div>
+      <div class="result-sub">Opponent stepped on a bomb 💣<br>Score — P1: ${scores[1]} &nbsp;|&nbsp; P2: ${scores[2]}</div>
+      <button class="btn-start" style="font-size:18px;padding:12px 32px" onclick="this.closest('.overlay').remove();resetToSetup()">🔄 Play Again!</button>
+    </div>`;
+        spawnConfetti(ov);
+        document.body.appendChild(ov);
+      }
+
+      function spawnConfetti(parent) {
+        const cols = [
+          "#e8473f",
+          "#2f7fc1",
+          "#f7c948",
+          "#4caf50",
+          "#ff9800",
+          "#9c27b0",
+        ];
+        const shapes = ["50%", "2px", "50%", "0"];
+        for (let i = 0; i < 40; i++) {
+          const p = document.createElement("div");
+          p.className = "particle";
+          const sz = 6 + Math.random() * 8;
+          p.style.cssText = `width:${sz}px;height:${sz}px;left:${5 + Math.random() * 90}%;top:0;background:${cols[i % cols.length]};border-radius:${shapes[i % shapes.length]};animation-duration:${0.8 + Math.random() * 1.2}s;animation-delay:${Math.random() * 0.5}s;`;
+          parent.appendChild(p);
+        }
+      }
+
+      function resetToSetup() {
+        document.getElementById("game-screen").classList.remove("active");
+        document.getElementById("setup-screen").classList.add("active");
+        document.getElementById("log").innerHTML = "";
+        pending = [];
+        updateSetupUI();
+      }
+    </script>
+  </body>
+</html>
